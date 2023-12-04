@@ -108,8 +108,7 @@ export class ZKillSubscriber {
 
     protected async onMessage (event: MessageEvent) {
         const data = JSON.parse(event.data.toString());
-        // const test = await ogs({url: data.zkb.url});
-        // console.log(test);
+
         this.subscriptions.forEach((guild, guildId) => {
             guild.channels.forEach((channel, channelId) => {
                 channel.subscriptions.forEach(async (subscription) => {
@@ -280,6 +279,29 @@ export class ZKillSubscriber {
                 try {
                     const content : MessageOptions = {};
                     if(embedding?.error === false) {
+                        const attackers = data.attackers.filter((a:any) => a.ship_type_id);
+                        const unknownShips = data.attackers.length - attackers.length;
+                        const attackerShips = [];
+
+                        for (const att of attackers) {
+                            try {
+                                const shipName = await this.esiClient.getShipFromId(att.ship_type_id);
+                                attackerShips.push(shipName);
+                            } catch (error) {
+                                console.error(`Error fetching ship name for ID ${att.ship_type_id}:`, error);
+                            }
+                        }
+                        const attackerShipNames = attackerShips.reduce((obj, name) => {
+                            obj[name] ? obj[name] += 1 : obj[name] = 1;
+                            return obj;
+                        }, {});
+
+                        let shipCountsString = '';
+
+                        for (const [key, value] of Object.entries(attackerShipNames)) {
+                            shipCountsString += `${key}: ${value}\n`;
+                        }
+
                         const descriptionArray = embedding?.result.ogDescription?.split(' ') || [];
                         const systemIndex = descriptionArray.indexOf('in');
                         const systemName = descriptionArray[systemIndex + 1] || 'NA';
@@ -291,9 +313,11 @@ export class ZKillSubscriber {
                             minute: '2-digit',
                             hour12: false
                         });
+                        const message = `Pilots on kill: ${data.attackers.length}\n\nSystem: ${systemName}\n\nTime: ${formattedDate}\n\n\`\`\`Attackers:\n\n${shipCountsString}\n${unknownShips > 0 ? 'Unknown: ' : ''}${unknownShips > 0 ? unknownShips : ''}\`\`\``;
+
                         content.embeds = [{
                             title: embedding?.result.ogTitle,
-                            description: `Pilots on kill: ${data.attackers.length}\n\nSystem: ${systemName}\n\nTime: ${formattedDate}`,
+                            description: message,
                             // description: embedding?.result.ogDescription,
                             thumbnail: {
                                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
