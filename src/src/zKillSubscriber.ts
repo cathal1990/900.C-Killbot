@@ -108,6 +108,8 @@ export class ZKillSubscriber {
 
     protected async onMessage (event: MessageEvent) {
         const data = JSON.parse(event.data.toString());
+        // const test = await ogs({url: data.zkb.url});
+        // console.log(test);
         this.subscriptions.forEach((guild, guildId) => {
             guild.channels.forEach((channel, channelId) => {
                 channel.subscriptions.forEach(async (subscription) => {
@@ -245,6 +247,7 @@ export class ZKillSubscriber {
                                 if(subscription.limitType !== LimitType.NONE && !await this.isInLimit(subscription, data.solar_system_id)) {
                                     return;
                                 }
+
                                 await this.sendKill(guildId, channelId, subscription.subType, data, subscription.id, color);
                             }
                             break;
@@ -277,9 +280,21 @@ export class ZKillSubscriber {
                 try {
                     const content : MessageOptions = {};
                     if(embedding?.error === false) {
+                        const descriptionArray = embedding?.result.ogDescription?.split(' ') || [];
+                        const systemIndex = descriptionArray.indexOf('in');
+                        const systemName = descriptionArray[systemIndex + 1] || 'NA';
+                        const formattedDate = new Date(data.killmail_time).toLocaleString('default', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false
+                        });
                         content.embeds = [{
                             title: embedding?.result.ogTitle,
-                            description: embedding?.result.ogDescription,
+                            description: `Pilots on kill: ${data.attackers.length}\n\nSystem: ${systemName}\n\nTime: ${formattedDate}`,
+                            // description: embedding?.result.ogDescription,
                             thumbnail: {
                                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                                 // @ts-ignore
@@ -292,7 +307,7 @@ export class ZKillSubscriber {
                                 width: embedding?.result.ogImage?.width
                             },
                             url: data.zkb.url,
-                            color: messageColor
+                            color: messageColor,
                         }];
                     } else {
                         content.content = data.zkb.url;
