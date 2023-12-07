@@ -313,7 +313,7 @@ export class ZKillSubscriber {
                             minute: '2-digit',
                             hour12: false
                         });
-                        const message = `Pilots on kill: ${data.attackers.length}\n\nSystem: ${systemName}\n\nTime: ${formattedDate}\n\n\`\`\`Attackers:\n\n${shipCountsString}\n${unknownShips > 0 ? 'Unknown: ' : ''}${unknownShips > 0 ? unknownShips : ''}\`\`\``;
+                        const message = `Pilots on kill: ${data.attackers.length}\n\nSystem: ${systemName}\n\nTime: ${formattedDate}\n\n\`\`\`Attackers:\n\n${shipCountsString}\n${unknownShips > 0 ? 'Unknown: ' : ''}${unknownShips > 0 ? String(unknownShips) : ''}\`\`\``;
 
                         content.embeds = [{
                             title: embedding?.result.ogTitle,
